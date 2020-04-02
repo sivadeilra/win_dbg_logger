@@ -3,7 +3,7 @@ name = "win_dbg_logger"
 version = "0.1.0"
 authors = ["Arlie Davis <ardavis@microsoft.com>"]
 edition = "2018"
-license = "Apache OR MIT-2.0"
+license = "MIT OR Apache-2.0"
 repository = "https://github.com/sivadeilra/win_dbg_logger"
 description = "A logger for use with Windows debuggers."
 

@@ -101,12 +101,16 @@ pub fn output_debug_string(s: &str) {
     #[cfg(windows)]
     {
         let len = s.encode_utf16().count() + 1;
-        let mut s_utf16: Vec<u16> = Vec::with_capacity(len + 1);
+        let mut s_utf16: Vec<u16> = Vec::with_capacity(len);
         s_utf16.extend(s.encode_utf16());
         s_utf16.push(0);
         unsafe {
             OutputDebugStringW(&s_utf16[0]);
         }
+    }
+    #[cfg(not(windows))]
+    {
+        let _ = s;
     }
 }
 

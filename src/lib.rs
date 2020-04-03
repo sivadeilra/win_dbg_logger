@@ -1,5 +1,7 @@
 //! A logger for use with Windows debuggers.
 //!
+//! This crate integrates with the ubiquitous [`log`] crate.
+//!
 //! Windows allows applications to output a string directly to debuggers. This is
 //! very useful in situations where other forms of logging are not available.
 //! For example, stderr is not available for GUI apps.
@@ -23,12 +25,33 @@
 //! This crate can be compiled and used on non-Windows platforms, but it does
 //! nothing. This is intended to minimize the impact on code that takes a
 //! dependency on this crate.
+//!
+//! # Example
+//!
+//! ```rust
+//! use log::{debug, info};
+//!
+//! fn do_cool_stuff() {
+//!    info!("Hello, world!");
+//!    debug!("Hello, world, in detail!");
+//! }
+//!
+//! fn main() {
+//!     log::set_logger(&win_dbg_logger::DEBUGGER_LOGGER).unwrap();
+//!     log::set_max_level(log::LevelFilter::Debug);
+//!
+//!     do_cool_stuff();
+//! }
+//! ```
 
 use log::{Level, LevelFilter, Metadata, Record};
 
 /// This implements `log::Log`, and so can be used as a logging provider.
 /// It forwards log messages to the Windows `OutputDebugString` API.
-pub struct DebuggerLogger;
+pub struct DebuggerLogger {
+    /// Allow for `DebuggerLogger` to possibly have more fields in the future
+    _priv: (),
+}
 
 /// This is a static instance of `DebuggerLogger`. Since `DebuggerLogger`
 /// contains no state, this can be directly registered using `log::set_logger`.
@@ -46,7 +69,7 @@ pub struct DebuggerLogger;
 /// info!("Hello, world!");
 /// debug!("Hello, world, in detail!");
 /// ```
-pub static DEBUGGER_LOGGER: DebuggerLogger = DebuggerLogger;
+pub static DEBUGGER_LOGGER: DebuggerLogger = DebuggerLogger { _priv: () };
 
 impl log::Log for DebuggerLogger {
     fn enabled(&self, metadata: &Metadata) -> bool {

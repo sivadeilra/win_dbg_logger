@@ -49,8 +49,8 @@ use log::{Level, LevelFilter, Metadata, Record};
 /// This implements `log::Log`, and so can be used as a logging provider.
 /// It forwards log messages to the Windows `OutputDebugString` API.
 pub struct DebuggerLogger {
-    /// Allow for `DebuggerLogger` to possibly have more fields in the future
-    _priv: (),
+    /// Force logging without debugger attached. Useful with DbgView
+    force_log_without_debugger: std::sync::atomic::AtomicBool,
 }
 
 /// This is a static instance of `DebuggerLogger`. Since `DebuggerLogger`
@@ -69,15 +69,27 @@ pub struct DebuggerLogger {
 /// info!("Hello, world!");
 /// debug!("Hello, world, in detail!");
 /// ```
-pub static DEBUGGER_LOGGER: DebuggerLogger = DebuggerLogger { _priv: () };
+pub static DEBUGGER_LOGGER: DebuggerLogger = DebuggerLogger {
+    force_log_without_debugger: std::sync::atomic::AtomicBool::new(false),
+};
+
+impl DebuggerLogger {
+    /// Set logging wihout debugger attached flag.
+    pub fn set_force_log_without_debugger(&self, v: bool) {
+        self.force_log_without_debugger
+            .store(v, std::sync::atomic::Ordering::Relaxed)
+    }
+}
 
 impl log::Log for DebuggerLogger {
-    fn enabled(&self, metadata: &Metadata) -> bool {
-        metadata.level() <= Level::Debug
+    fn enabled(&self, _metadata: &Metadata) -> bool {
+        self.force_log_without_debugger
+            .load(std::sync::atomic::Ordering::Relaxed)
+            || is_debugger_present()
     }
 
     fn log(&self, record: &Record) {
-        if self.enabled(record.metadata()) && is_debugger_present() {
+        if self.enabled(record.metadata()) {
             let s = format!(
                 "{}({}): {} - {}\r\n",
                 record.file().unwrap_or("<unknown>"),
